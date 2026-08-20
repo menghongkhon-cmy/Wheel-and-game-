@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>TIME SPIN - Smart Time & Team Tool</title>
+
+    <link rel="stylesheet" href="style.css">
+
+    <!-- Favicon -->
+    <link rel="icon" href="logo.png" type="image/png">
+    <link rel="shortcut icon" href="logo.png" type="image/png">
+</head>
+<body>
+
+    <canvas id="confettiCanvas"></canvas>
+
+    <!-- HEADER / NAVIGATION -->
+    <header class="navbar glass">
+        <div class="nav-container">
+            <div class="logo">
+                <div class="logo-icon">⏳</div>
+                <span class="logo-text">TIME SPIN</span>
+            </div>
+
+            <nav class="nav-menu" id="navMenu">
+                <button class="nav-link active" data-tab="home" data-i18n="nav_home">Home</button>
+                <button class="nav-link" data-tab="time" data-i18n="nav_time">Time & Clocks</button>
+                <button class="nav-link" data-tab="spinner" data-i18n="nav_spinner">Spinner</button>
+                <button class="nav-link" data-tab="teams" data-i18n="nav_teams">Teams</button>
+                <button class="nav-link" data-tab="tools" data-i18n="nav_tools">Tools</button>
+                <button class="nav-link" data-tab="games">🎮 Arcade (5 Games)</button>
+                <!-- <button class="nav-link" data-tab="games"><a href="./game/index.html"></a>🎮 Arcade</button> -->
+
+                <button class="nav-link" id="game"><a href="./game/index.html">Game</a></button>
+                <button class="nav-link" data-tab="history" data-i18n="nav_history">History</button>
+                <button class="nav-link" data-tab="settings" data-i18n="nav_settings">Settings</button>
+            </nav>
+
+            <div class="nav-actions">
+                <button class="icon-btn" id="langToggle" aria-label="Toggle Language">🇰🇭 ខ្មែរ</button>
+                <button class="icon-btn" id="themeToggle" aria-label="Toggle Theme">🌙</button>
+                <button class="icon-btn" id="shortcutHelpBtn" aria-label="Keyboard Shortcuts">⌨️</button>
+                <button class="hamburger" id="hamburgerBtn" aria-label="Toggle Menu">
+                    <span></span><span></span><span></span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN CONTENT CONTAINERS -->
+    <main class="app-main">
+
+        <!-- 1. HOME DASHBOARD -->
+        <section id="tab-home" class="tab-page active">
+            <div class="hero-section glass">
+                <div class="hero-content">
+                    <span class="greeting-badge" id="greetingText">Good Morning 👋</span>
+                    <h1 class="hero-time" id="heroTimeDisplay">00:00:00 AM</h1>
+                    <p class="hero-date" id="heroDateDisplay">Thursday, August 20, 2026</p>
+                    <div class="quick-actions">
+                        <button class="btn btn-primary" onclick="switchTab('spinner')">🎯 <span data-i18n="btn_spin">Spin Name</span></button>
+                        <button class="btn btn-secondary" onclick="switchTab('teams')">👥 <span data-i18n="btn_teams">Create Teams</span></button>
+                        <button class="btn btn-secondary" onclick="switchTab('time')">⏱️ <span data-i18n="btn_timer">Timers & Clock</span></button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid-layout cols-4 mt-2">
+                <div class="card glass stat-card">
+                    <div class="stat-icon">🎡</div>
+                    <div>
+                        <div class="stat-value" id="statSpins">0</div>
+                        <div class="stat-label" data-i18n="stat_spins">Total Spins</div>
+                    </div>
+                </div>
+                <div class="card glass stat-card">
+                    <div class="stat-icon">👥</div>
+                    <div>
+                        <div class="stat-value" id="statTeams">0</div>
+                        <div class="stat-label" data-i18n="stat_teams">Teams Created</div>
+                    </div>
+                </div>
+                <div class="card glass stat-card">
+                    <div class="stat-icon">🍅</div>
+                    <div>
+                        <div class="stat-value" id="statFocus">0m</div>
+                        <div class="stat-label" data-i18n="stat_focus">Focus Time</div>
+                    </div>
+                </div>
+                <div class="card glass stat-card">
+                    <div class="stat-icon">🎲</div>
+                    <div>
+                        <div class="stat-value" id="statRandom">0</div>
+                        <div class="stat-label" data-i18n="stat_random">Random Tools Used</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. TIME & CLOCKS SECTION -->
+        <section id="tab-time" class="tab-page">
+            <div class="subnav-tabs">
+                <button class="subtab-btn active" data-subtab="subtab-clock" data-i18n="sub_clock">Clock</button>
+                <button class="subtab-btn" data-subtab="subtab-timer" data-i18n="sub_timer">Timer</button>
+                <button class="subtab-btn" data-subtab="subtab-stopwatch" data-i18n="sub_stopwatch">Stopwatch</button>
+                <button class="subtab-btn" data-subtab="subtab-pomodoro" data-i18n="sub_pomodoro">Pomodoro</button>
+                <button class="subtab-btn" data-subtab="subtab-world" data-i18n="sub_world">World Clock</button>
+                <button class="subtab-btn" data-subtab="subtab-alarm" data-i18n="sub_alarm">Alarms</button>
+            </div>
+
+            <!-- Digital & Analog Clock -->
+            <div id="subtab-clock" class="subtab-content active">
+                <div class="grid-layout cols-2">
+                    <div class="card glass text-center">
+                        <h3 data-i18n="digital_clock">Digital Clock</h3>
+                        <div class="clock-large" id="digitalClockTime">00:00:00</div>
+                        <div class="clock-sub" id="digitalClockDate">Loading...</div>
+                        <div class="mt-1">
+                            <button class="btn btn-sm btn-secondary" id="toggleFormatBtn">Switch to 24H</button>
+                        </div>
+                    </div>
+                    <div class="card glass flex-center flex-column">
+                        <h3 data-i18n="analog_clock">Analog Clock</h3>
+                        <div class="analog-clock">
+                            <div class="hand hour-hand" id="hourHand"></div>
+                            <div class="hand min-hand" id="minHand"></div>
+                            <div class="hand sec-hand" id="secHand"></div>
+                            <div class="center-dot"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Countdown Timer -->
+            <div id="subtab-timer" class="subtab-content">
+                <div class="card glass max-w-600 text-center">
+                    <h3 data-i18n="timer_title">Countdown Timer</h3>
+                    <div class="timer-display-large" id="timerDisplay">00:00:00</div>
+                    <div class="input-group-row mb-1">
+                        <input type="number" id="timerHrs" placeholder="HH" min="0" max="23">
+                        <input type="number" id="timerMins" placeholder="MM" min="0" max="59" value="5">
+                        <input type="number" id="timerSecs" placeholder="SS" min="0" max="59" value="0">
+                    </div>
+                    <div class="preset-pills mb-1">
+                        <button class="pill-btn" onclick="setTimerPreset(1)">1m</button>
+                        <button class="pill-btn" onclick="setTimerPreset(5)">5m</button>
+                        <button class="pill-btn" onclick="setTimerPreset(10)">10m</button>
+                        <button class="pill-btn" onclick="setTimerPreset(15)">15m</button>
+                        <button class="pill-btn" onclick="setTimerPreset(30)">30m</button>
+                    </div>
+                    <div class="flex-center gap-1">
+                        <button class="btn btn-primary" id="timerStartBtn" onclick="toggleTimer()">Start</button>
+                        <button class="btn btn-danger" onclick="resetTimer()">Reset</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stopwatch -->
+            <div id="subtab-stopwatch" class="subtab-content">
+                <div class="card glass max-w-600 text-center">
+                    <h3 data-i18n="sw_title">Precision Stopwatch</h3>
+                    <div class="timer-display-large" id="swDisplay">00:00:00.00</div>
+                    <div class="flex-center gap-1 mb-1">
+                        <button class="btn btn-primary" id="swStartBtn" onclick="toggleStopwatch()">Start</button>
+                        <button class="btn btn-secondary" onclick="lapStopwatch()">Lap</button>
+                        <button class="btn btn-danger" onclick="resetStopwatch()">Reset</button>
+                    </div>
+                    <div class="lap-list mt-1" id="lapList"></div>
+                </div>
+            </div>
+
+            <!-- Pomodoro Timer -->
+            <div id="subtab-pomodoro" class="subtab-content">
+                <div class="card glass max-w-600 text-center">
+                    <span class="greeting-badge" id="pomoPhase">Focus Session</span>
+                    <div class="timer-display-large" id="pomoDisplay">25:00</div>
+                    <p class="mb-1" id="pomoQuote">"Stay focused 💪"</p>
+                    <div class="flex-center gap-1 mb-1">
+                        <button class="btn btn-primary" id="pomoStartBtn" onclick="togglePomo()">Start</button>
+                        <button class="btn btn-secondary" onclick="skipPomo()">Skip</button>
+                        <button class="btn btn-danger" onclick="resetPomo()">Reset</button>
+                    </div>
+                    <div class="stat-label">Completed Sessions: <strong id="pomoSessionCount">0</strong></div>
+                </div>
+            </div>
+
+            <!-- World Clock -->
+            <div id="subtab-world" class="subtab-content">
+                <div class="grid-layout cols-3" id="worldClockGrid"></div>
+            </div>
+
+            <!-- Alarms -->
+            <div id="subtab-alarm" class="subtab-content">
+                <div class="card glass max-w-600">
+                    <h3 data-i18n="alarm_add">Add New Alarm</h3>
+                    <div class="input-group-row">
+                        <input type="time" id="alarmTimeInput">
+                        <input type="text" id="alarmLabelInput" placeholder="Alarm Label (e.g. Standup)">
+                        <button class="btn btn-primary" onclick="addAlarm()">Add Alarm</button>
+                    </div>
+                    <div class="alarm-list mt-2" id="alarmList"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. RANDOM NAME SPINNER -->
+        <section id="tab-spinner" class="tab-page">
+            <div class="spinner-layout">
+                <div class="card glass flex-center flex-column wheel-wrapper">
+                    <div class="wheel-pointer"></div>
+                    <canvas id="wheelCanvas"></canvas>
+                    <button class="btn btn-primary btn-lg mt-1" id="spinBtn" onclick="spinWheel()">SPIN 🎯</button>
+                </div>
+
+                <div class="card glass control-panel">
+                    <h3 data-i18n="participant_manager">Participants Manager</h3>
+                    <p class="text-muted text-sm mb-1">Enter names (one per line or separated by commas):</p>
+                    <textarea id="namesInput" rows="8">Menghong
+Dara
+Sokha
+Vanna
+Rina
+Pheak
+Chan</textarea>
+                    
+                    <div class="flex-center gap-1 mb-1">
+                        <button class="btn btn-sm btn-secondary" onclick="shuffleNames()">Shuffle</button>
+                        <button class="btn btn-sm btn-danger" onclick="clearNames()">Clear</button>
+                    </div>
+
+                    <hr class="divider">
+
+                    <div class="toggle-control mb-1">
+                        <label for="removeWinnerToggle">Remove winner after spin</label>
+                        <input type="checkbox" id="removeWinnerToggle" class="custom-checkbox">
+                    </div>
+                    <div class="toggle-control">
+                        <label for="soundToggle">Sound effects</label>
+                        <input type="checkbox" id="soundToggle" class="custom-checkbox" checked>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. TEAM GENERATOR -->
+        <section id="tab-teams" class="tab-page">
+            <div class="grid-layout cols-2 mb-2">
+                <div class="card glass">
+                    <h3 data-i18n="team_gen_title">Team Generator</h3>
+                    <label class="text-sm text-muted">Members List:</label>
+                    <textarea id="teamMembersInput" rows="6">Menghong
+Dara
+Sokha
+Vanna
+Rina
+Pheak
+Chan
+Rith
+Lina
+Bora
+Vannak
+Pisey</textarea>
+                    <div class="input-group-row mt-1">
+                        <div>
+                            <label class="text-sm text-muted">Mode:</label>
+                            <select id="teamGenMode">
+                                <option value="numTeams">Number of Teams</option>
+                                <option value="sizeTeam">People per Team</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="text-sm text-muted">Count / Size:</label>
+                            <input type="number" id="teamGenVal" value="3" min="1" max="20">
+                        </div>
+                    </div>
+                    <button class="btn btn-primary mt-1" onclick="generateTeams()">Generate Teams</button>
+                </div>
+
+                <div class="card glass">
+                    <h3 data-i18n="random_task_assign">Random Task Assignee</h3>
+                    <label class="text-sm text-muted">Tasks List (comma-separated):</label>
+                    <input type="text" id="taskListInput" value="Presentation, Coding, Design, Testing, Documentation">
+                    <button class="btn btn-secondary mt-1" onclick="assignTasks()">Assign Tasks to Members</button>
+                    <div class="task-output mt-1" id="taskOutput"></div>
+                </div>
+            </div>
+
+            <div class="teams-grid" id="teamsOutputGrid"></div>
+        </section>
+
+        <!-- 5. TOOLS SECTION -->
+        <section id="tab-tools" class="tab-page">
+            <div class="grid-layout cols-3">
+                <div class="card glass text-center">
+                    <h3 data-i18n="tool_coin">Coin Flip</h3>
+                    <div class="coin-container">
+                        <div class="coin" id="coinElem">
+                            <div class="coin-face coin-front">HEADS</div>
+                            <div class="coin-face coin-back">TAILS</div>
+                        </div>
+                    </div>
+                    <button class="btn btn-primary" onclick="flipCoin()">FLIP COIN</button>
+                </div>
+
+                <div class="card glass text-center">
+                    <h3 data-i18n="tool_dice">Dice Roller</h3>
+                    <div class="dice-box" id="diceDisplay">6</div>
+                    <div class="flex-center gap-1 mb-1">
+                        <select id="diceType">
+                            <option value="6">D6</option>
+                            <option value="8">D8</option>
+                            <option value="10">D10</option>
+                            <option value="12">D12</option>
+                            <option value="20">D20</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-primary" onclick="rollDice()">ROLL DICE</button>
+                </div>
+
+                <div class="card glass text-center">
+                    <h3 data-i18n="tool_choice">Choice Picker</h3>
+                    <div class="result-box" id="choiceOutput">-</div>
+                    <input type="text" id="choiceListInput" value="Pizza, Burger, Noodles, Sushi, Rice">
+                    <button class="btn btn-primary mt-1" onclick="pickRandomChoice()">PICK RANDOM</button>
+                </div>
+
+                <div class="card glass text-center">
+                    <h3 data-i18n="tool_number">Number Generator</h3>
+                    <div class="result-box" id="numberOutput">-</div>
+                    <div class="input-group-row">
+                        <input type="number" id="numMin" value="1" placeholder="Min">
+                        <input type="number" id="numMax" value="100" placeholder="Max">
+                    </div>
+                    <button class="btn btn-primary mt-1" onclick="generateRandomNumber()">GENERATE</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- 6. HISTORY DASHBOARD -->
+        <section id="tab-history" class="tab-page">
+            <div class="card glass">
+                <div class="flex-between mb-1">
+                    <h3 data-i18n="history_title">Activity & Selection History</h3>
+                    <button class="btn btn-sm btn-danger" onclick="clearHistory()">Clear History</button>
+                </div>
+                <div class="history-list" id="historyListContainer"></div>
+            </div>
+        </section>
+
+        <!-- 7. SETTINGS PAGE -->
+        <section id="tab-settings" class="tab-page">
+            <div class="card glass max-w-600">
+                <h3 data-i18n="settings_title">Application Settings</h3>
+                <div class="setting-item">
+                    <span>Accent Theme Color</span>
+                    <input type="color" id="accentColorPicker" value="#6366f1" onchange="updateAccentColor(this.value)">
+                </div>
+                <div class="setting-item">
+                    <span>Data Management</span>
+                    <div class="flex-center gap-1">
+                        <button class="btn btn-sm btn-secondary" onclick="exportData()">Export JSON</button>
+                        <button class="btn btn-sm btn-secondary" onclick="triggerImport()">Import JSON</button>
+                        <input type="file" id="importFileInput" style="display:none;" onchange="importData(event)">
+                    </div>
+                </div>
+                <div class="setting-item">
+                    <span>Reset All Application Data</span>
+                    <button class="btn btn-sm btn-danger" onclick="confirmResetAll()">Reset Data</button>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="glass footer">
+        <p>© 2026 TIME SPIN — High Quality Smart Time & Team Tool.</p>
+    </footer>
+
+    <!-- WINNER MODAL -->
+    <div class="modal-overlay" id="winnerModal">
+        <div class="modal-card glass text-center">
+            <h2>🎉 CONGRATULATIONS! 🎉</h2>
+            <div class="winner-name-display" id="modalWinnerName">Winner Name</div>
+            <p>has been randomly selected!</p>
+            <div class="flex-center gap-1 mt-2">
+                <button class="btn btn-primary" onclick="closeWinnerModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SHORTCUTS MODAL -->
+    <div class="modal-overlay" id="shortcutsModal">
+        <div class="modal-card glass">
+            <h3>⌨️ Keyboard Shortcuts</h3>
+            <ul class="shortcut-list">
+                <li><kbd>Space</kbd> Start / Pause Active Timer</li>
+                <li><kbd>S</kbd> Spin Wheel</li>
+                <li><kbd>Esc</kbd> Close Modals</li>
+            </ul>
+            <div class="text-center mt-2">
+                <button class="btn btn-secondary" onclick="closeShortcutsModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
+
+   
+
+
+
+    <!-- ARCADE GAMES SECTION -->
+<section id="tab-games" class="tab-page">
+    <div class="subnav-tabs mb-2">
+        <button class="subtab-btn active" data-subtab="subtab-typing">⌨️ Speed Typer</button>
+        <button class="subtab-btn" data-subtab="subtab-reaction">⚡ Reaction Tester</button>
+        <button class="subtab-btn" data-subtab="subtab-aim">🎯 Aim Trainer</button>
+        <button class="subtab-btn" data-subtab="subtab-simon">🧠 Memory Lights</button>
+        <button class="subtab-btn" data-subtab="subtab-whack">🔨 Mole Smasher</button>
+    </div>
+
+    <!-- 1. SPEED TYPER -->
+    <div id="subtab-typing" class="subtab-content active">
+        <div class="card glass max-w-600 text-center">
+            <h3>Speed Typer</h3>
+            <p class="text-muted text-sm mb-1">Type as many words as possible before time runs out!</p>
+            <div class="flex-between mb-1">
+                <span>Time: <strong id="typerTime">15</strong>s</span>
+                <span>Score: <strong id="typerScore">0</strong></span>
+            </div>
+            <div class="typer-word-box my-1" id="typerWord">Click Start</div>
+            <input type="text" id="typerInput" placeholder="Type here..." disabled autocomplete="off">
+            <button class="btn btn-primary mt-2" id="typerStartBtn" onclick="startSpeedTyper()">Start Test</button>
+        </div>
+    </div>
+
+    <!-- 2. REACTION TESTER -->
+    <div id="subtab-reaction" class="subtab-content">
+        <div class="card glass max-w-600 text-center">
+            <h3>Reaction Time Tester</h3>
+            <p class="text-muted text-sm mb-1">Click the box as fast as you can when it turns GREEN!</p>
+            <div class="reaction-box my-2" id="reactionBox" onclick="handleReactionClick()">Click to Begin</div>
+            <div class="game-status-text" id="reactionResult">Best Time: -- ms</div>
+        </div>
+    </div>
+
+    <!-- 3. AIM TRAINER -->
+    <div id="subtab-aim" class="subtab-content">
+        <div class="card glass max-w-600 text-center">
+            <h3>Aim & Click Trainer</h3>
+            <div class="flex-between mb-1">
+                <span>Time: <strong id="aimTime">15</strong>s</span>
+                <span>Targets: <strong id="aimScore">0</strong></span>
+            </div>
+            <div class="aim-area my-1" id="aimArea">
+                <div class="aim-target" id="aimTarget" onclick="hitAimTarget()">🎯</div>
+            </div>
+            <button class="btn btn-primary mt-1" id="aimStartBtn" onclick="startAimTrainer()">Start Game</button>
+        </div>
+    </div>
+
+    <!-- 4. MEMORY LIGHTS (SIMON) -->
+    <div id="subtab-simon" class="subtab-content">
+        <div class="card glass max-w-600 text-center">
+            <h3>Memory Pattern Lights</h3>
+            <div class="game-status-text my-1" id="simonStatus">Level: 1</div>
+            <div class="simon-grid my-2">
+                <button class="simon-btn red" id="simon-0" onclick="handleSimonClick(0)"></button>
+                <button class="simon-btn blue" id="simon-1" onclick="handleSimonClick(1)"></button>
+                <button class="simon-btn green" id="simon-2" onclick="handleSimonClick(2)"></button>
+                <button class="simon-btn yellow" id="simon-3" onclick="handleSimonClick(3)"></button>
+            </div>
+            <button class="btn btn-primary" onclick="startSimon()">Start Sequence</button>
+        </div>
+    </div>
+
+    <!-- 5. MOLE SMASHER -->
+    <div id="subtab-whack" class="subtab-content">
+        <div class="card glass max-w-600 text-center">
+            <h3>Mole Smasher</h3>
+            <div class="flex-between mb-1">
+                <span>Time: <strong id="moleTime">15</strong>s</span>
+                <span>Score: <strong id="moleScore">0</strong></span>
+            </div>
+            <div class="mole-grid my-2">
+                <div class="mole-hole" onclick="smackMole(0)"><span class="mole">🐹</span></div>
+                <div class="mole-hole" onclick="smackMole(1)"><span class="mole">🐹</span></div>
+                <div class="mole-hole" onclick="smackMole(2)"><span class="mole">🐹</span></div>
+                <div class="mole-hole" onclick="smackMole(3)"><span class="mole">🐹</span></div>
+                <div class="mole-hole" onclick="smackMole(4)"><span class="mole">🐹</span></div>
+                <div class="mole-hole" onclick="smackMole(5)"><span class="mole">🐹</span></div>
+            </div>
+            <button class="btn btn-primary" id="moleStartBtn" onclick="startMoleGame()">Start Game</button>
+        </div>
+    </div>
+</section>
+
+    <script src="script.js"></script>
+</body>
+</html>
