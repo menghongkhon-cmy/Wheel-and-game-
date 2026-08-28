@@ -94,6 +94,15 @@ body {
     -webkit-text-fill-color: transparent;
 }
 
+.logo-icon {
+    width: 42px;
+    height: 42px;
+    object-fit: cover;
+    border-radius: 50%;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+    flex-shrink: 0;
+}
+
 .nav-menu { display: flex; gap: 0.35rem; }
 
 .nav-link {
