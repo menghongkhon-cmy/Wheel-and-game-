@@ -349,11 +349,9 @@ function selectWinner() {
     state.stats.spins++;
     saveStats();
 
-    if (document.getElementById('removeWinnerToggle').checked) {
-        names.splice(index, 1);
-        document.getElementById('namesInput').value = names.join('\n');
-        drawWheel();
-    }
+    names.splice(index, 1);
+    document.getElementById('namesInput').value = names.join('\n');
+    drawWheel();
 }
 
 function closeWinnerModal() {
