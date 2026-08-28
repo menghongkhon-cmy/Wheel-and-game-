@@ -217,6 +217,17 @@ let isSpinning = false;
 let lastTickIndex = -1;
 
 function initSpinnerModule() {
+    const savedNames = JSON.parse(localStorage.getItem('ts_saved_wheel') || 'null');
+    if (Array.isArray(savedNames) && savedNames.length) document.getElementById('namesInput').value = savedNames.join('\n');
+    const sharedWheel = new URLSearchParams(location.search).get('wheel');
+    if (sharedWheel) {
+        try {
+            const sharedNames = JSON.parse(decodeURIComponent(escape(atob(sharedWheel))));
+            if (Array.isArray(sharedNames) && sharedNames.length) document.getElementById('namesInput').value = sharedNames.filter(name => typeof name === 'string').join('\n');
+        } catch (error) {
+            showToast('This wheel link could not be opened');
+        }
+    }
     document.getElementById('namesInput').addEventListener('input', drawWheel);
     window.addEventListener('resize', drawWheel);
     drawWheel();
@@ -300,7 +311,7 @@ function spinWheel() {
 
     isSpinning = true;
     lastTickIndex = -1;
-    let duration = 4500;
+    let duration = parseInt(document.getElementById('spinDuration')?.value, 10) || 4500;
     let start = null;
     const totalRotation = (Math.random() * 8 + 12) * 2 * Math.PI;
 
@@ -340,6 +351,7 @@ function selectWinner() {
     const winner = names[index];
 
     document.getElementById('modalWinnerName').textContent = winner;
+    document.getElementById('lastWinnerDisplay').textContent = `Last winner · ${winner}`;
     document.getElementById('winnerModal').classList.add('active');
     
     playFanfareSound();
@@ -349,8 +361,10 @@ function selectWinner() {
     state.stats.spins++;
     saveStats();
 
-    names.splice(index, 1);
-    document.getElementById('namesInput').value = names.join('\n');
+    if (document.getElementById('removeWinnerToggle')?.checked) {
+        names.splice(index, 1);
+        document.getElementById('namesInput').value = names.join('\n');
+    }
     drawWheel();
 }
 
@@ -367,6 +381,43 @@ function shuffleNames() {
 function clearNames() {
     document.getElementById('namesInput').value = '';
     drawWheel();
+}
+
+function saveCurrentWheel() {
+    const names = getNamesList();
+    if (names.length < 2) return showToast('Add at least 2 options first');
+    localStorage.setItem('ts_saved_wheel', JSON.stringify(names));
+    const note = document.getElementById('savedWheelNote');
+    if (note) note.textContent = `Saved locally · ${names.length} options`;
+    showToast('Wheel saved successfully');
+}
+
+function shareCurrentWheel() {
+    const names = getNamesList();
+    if (names.length < 2) return showToast('Add at least 2 options first');
+    const payload = btoa(unescape(encodeURIComponent(JSON.stringify(names))));
+    const link = `${location.origin}${location.pathname}?wheel=${payload}`;
+    if (navigator.clipboard) navigator.clipboard.writeText(link);
+    showToast('Share link copied');
+}
+
+function togglePresentationMode() {
+    document.body.classList.toggle('presentation-mode');
+    if (document.body.classList.contains('presentation-mode')) switchTab('spinner');
+}
+
+function generateAiWheel() {
+    const prompt = (document.getElementById('aiPrompt')?.value || '').toLowerCase();
+    const sets = prompt.includes('food') || prompt.includes('cambodian') ? ['Amok', 'Bai Sach Chrouk', 'Kuy Teav', 'Lok Lak', 'Nom Banh Chok'] : prompt.includes('study') ? ['Math', 'Reading', 'Practice quiz', 'Review notes', 'Group study'] : ['Presentation', 'Quiz', 'Group discussion', 'Reading', 'Game', 'Coding'];
+    document.getElementById('aiResult').innerHTML = `<span class="feature-icon">✺</span><div><strong>${sets.join(' · ')}</strong><p class="text-muted">Generated locally as a private demo. <button class="btn btn-sm btn-secondary" onclick="useAiWheel()">Use in wheel</button></p></div>`;
+    window.generatedAiWheel = sets;
+}
+
+function useAiWheel() {
+    if (!window.generatedAiWheel) return;
+    document.getElementById('namesInput').value = window.generatedAiWheel.join('\n');
+    drawWheel();
+    switchTab('spinner');
 }
 
 // --- TEAM GENERATOR ---
@@ -405,8 +456,11 @@ function assignTasks() {
     if (rawMembers.length === 0 || tasks.length === 0) return;
     out.innerHTML = '';
 
-    rawMembers.forEach(m => {
-        const assignedTask = tasks[Math.floor(Math.random() * tasks.length)];
+    // Shuffle once, then distribute evenly so work does not repeat too early.
+    const shuffledTasks = [...tasks].sort(() => Math.random() - 0.5);
+
+    rawMembers.forEach((m, index) => {
+        const assignedTask = shuffledTasks[index % shuffledTasks.length];
         const row = document.createElement('div');
         row.className = 'text-sm mt-1';
         row.innerHTML = `<strong>${m}</strong> → <span class="text-muted">${assignedTask}</span>`;
@@ -660,6 +714,16 @@ function renderStats() {
     document.getElementById('statTeams').textContent = state.stats.teams;
     document.getElementById('statFocus').textContent = `${state.stats.focusMinutes}m`;
     document.getElementById('statRandom').textContent = state.stats.randoms;
+    const values = { analyticsSpins: state.stats.spins, analyticsTeams: state.stats.teams, analyticsFocus: `${state.stats.focusMinutes}m`, analyticsRandom: state.stats.randoms };
+    Object.entries(values).forEach(([id, value]) => { const el = document.getElementById(id); if (el) el.textContent = value; });
+    const xp = state.stats.spins + state.stats.teams + state.stats.randoms;
+    const level = Math.floor(xp / 10) + 1;
+    const levelEl = document.getElementById('achievementLevel');
+    if (levelEl) levelEl.textContent = `Level ${level}`;
+    const progress = document.getElementById('achievementProgress');
+    if (progress) progress.textContent = `${xp % 10} / 10 XP`;
+    const bar = document.getElementById('achievementBar');
+    if (bar) bar.style.width = `${(xp % 10) * 10}%`;
 }
 
 // --- CONFETTI ANIMATION ENGINE ---
@@ -730,9 +794,9 @@ function confirmResetAll() {
 /* --- TIME SPIN GAME ENGINE --- */
 
 document.addEventListener('DOMContentLoaded', () => {
-    initTTT();
-    initMemoryGame();
-    resetHigherLower();
+    if (document.querySelector('.ttt-cell')) initTTT();
+    if (document.getElementById('memoryGrid')) initMemoryGame();
+    if (typeof resetHigherLower === 'function') resetHigherLower();
 });
 
 // --- 1. TIC TAC TOE ---

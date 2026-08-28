@@ -92,21 +92,26 @@
                 <span class="logo-text">TIME SPIN</span>
             </div>
 
-            <nav class="nav-menu" id="navMenu">
-                <button class="nav-link active" data-tab="home" data-i18n="nav_home">Home</button>
-                <button class="nav-link" data-tab="time" data-i18n="nav_time">Time & Clocks</button>
-                <button class="nav-link" data-tab="spinner" data-i18n="nav_spinner">Spinner</button>
-                <button class="nav-link" data-tab="teams" data-i18n="nav_teams">Teams</button>
-                <button class="nav-link" data-tab="tools" data-i18n="nav_tools">Tools</button>
-                <button class="nav-link" data-tab="games">🎮 Arcade (5 Games)</button>
-                <!-- <button class="nav-link" data-tab="games"><a href="./game/index.html"></a>🎮 Arcade</button> -->
-
-                <!-- <button class="nav-link" id="game"><a href="./game/index.html">Game</a></button> -->
-                <button class="nav-link" data-tab="history" data-i18n="nav_history">History</button>
-                <button class="nav-link" data-tab="settings" data-i18n="nav_settings">Settings</button>
+            <nav class="nav-menu" id="navMenu" aria-label="Primary navigation">
+                <div class="nav-section-label">WORKSPACE</div>
+                <button class="nav-link active" data-tab="home" data-i18n="nav_home">⌂ <span>Dashboard</span></button>
+                <button class="nav-link nav-link-feature" data-tab="spinner" data-i18n="nav_spinner">◉ <span>Wheel</span></button>
+                <button class="nav-link" data-tab="teams" data-i18n="nav_teams">♙ <span>Teams</span></button>
+                <button class="nav-link" data-tab="classroom">▦ <span>Classroom</span></button>
+                <div class="nav-section-label">TOOLS</div>
+                <button class="nav-link" data-tab="time" data-i18n="nav_time">◷ <span>Productivity</span></button>
+                <button class="nav-link" data-tab="tools" data-i18n="nav_tools">✣ <span>Random Tools</span></button>
+                <button class="nav-link" data-tab="games">✦ <span>Arcade</span></button>
+                <button class="nav-link" data-tab="ai">✺ <span>AI Studio</span></button>
+                <div class="nav-section-label">INSIGHTS</div>
+                <button class="nav-link" data-tab="statistics">▥ <span>Statistics</span></button>
+                <button class="nav-link" data-tab="achievements">♛ <span>Achievements</span></button>
+                <button class="nav-link" data-tab="history" data-i18n="nav_history">↺ <span>History</span></button>
+                <button class="nav-link" data-tab="settings" data-i18n="nav_settings">⚙ <span>Settings</span></button>
             </nav>
 
             <div class="nav-actions">
+                <div class="profile-chip"><span class="profile-avatar">G</span><span class="profile-name">Guest workspace</span></div>
                 <button class="icon-btn" id="langToggle" aria-label="Toggle Language">🇰🇭 ខ្មែរ</button>
                 <button class="icon-btn" id="themeToggle" aria-label="Toggle Theme">🌙</button>
                 <button class="icon-btn" id="shortcutHelpBtn" aria-label="Keyboard Shortcuts">⌨️</button>
@@ -122,17 +127,19 @@
 
         <!-- 1. HOME DASHBOARD -->
         <section id="tab-home" class="tab-page active">
-            <div class="hero-section glass">
+            <div class="hero-section glass dashboard-hero">
                 <div class="hero-content">
-                    <span class="greeting-badge" id="greetingText">Good Morning 👋</span>
-                    <h1 class="hero-time" id="heroTimeDisplay">00:00:00 AM</h1>
-                    <p class="hero-date" id="heroDateDisplay">Thursday, August 20, 2026</p>
+                    <span class="eyebrow">TIME SPIN PRO 2.0 / GUEST WORKSPACE</span>
+                    <h1 class="dashboard-title">Make the next choice <span>effortlessly.</span></h1>
+                    <p class="hero-description">A focused workspace for decisions, teams, classroom moments, and deep work.</p>
+                    <div class="hero-clock"><strong id="heroTimeDisplay">00:00:00 AM</strong><span id="heroDateDisplay">Thursday, August 20, 2026</span></div>
                     <div class="quick-actions">
-                        <button class="btn btn-primary" onclick="switchTab('spinner')">🎯 <span data-i18n="btn_spin">Spin Name</span></button>
-                        <button class="btn btn-secondary" onclick="switchTab('teams')">👥 <span data-i18n="btn_teams">Create Teams</span></button>
-                        <button class="btn btn-secondary" onclick="switchTab('time')">⏱️ <span data-i18n="btn_timer">Timers & Clock</span></button>
+                        <button class="btn btn-primary" onclick="switchTab('spinner')">Spin a wheel <span>→</span></button>
+                        <button class="btn btn-secondary" onclick="switchTab('teams')">Create teams</button>
+                        <button class="btn btn-secondary" onclick="switchTab('time')">Start focus</button>
                     </div>
                 </div>
+                <div class="hero-orbit"><div class="orbit-ring"></div><div class="orbit-core">◉</div><span class="orbit-label">YOUR DECISION<br><b>STARTS HERE</b></span></div>
             </div>
 
             <div class="grid-layout cols-4 mt-2">
@@ -164,6 +171,12 @@
                         <div class="stat-label" data-i18n="stat_random">Random Tools Used</div>
                     </div>
                 </div>
+            </div>
+            <div class="section-heading"><div><span class="eyebrow">QUICK START</span><h2>Tools for the moment</h2></div><span class="text-muted">Everything stays in this browser</span></div>
+            <div class="feature-grid">
+                <button class="feature-card feature-card-primary" onclick="switchTab('spinner')"><span class="feature-icon">◉</span><strong>Decision wheel</strong><small>Pick a winner, keep your list, share the moment.</small><span class="feature-arrow">↗</span></button>
+                <button class="feature-card" onclick="switchTab('teams')"><span class="feature-icon">♙</span><strong>Team studio</strong><small>Build balanced groups in a few seconds.</small><span class="feature-arrow">↗</span></button>
+                <button class="feature-card" onclick="switchTab('time')"><span class="feature-icon">◷</span><strong>Focus room</strong><small>Timers, Pomodoro, clocks, and alarms.</small><span class="feature-arrow">↗</span></button>
             </div>
         </section>
 
@@ -275,16 +288,18 @@
 
         <!-- 3. RANDOM NAME SPINNER -->
         <section id="tab-spinner" class="tab-page">
+            <div class="page-heading"><div><span class="eyebrow">WHEEL STUDIO</span><h1>Create a decision wheel</h1><p class="text-muted">Shape the list, set the rules, and let the room decide.</p></div><div class="page-actions"><button class="btn btn-secondary" onclick="saveCurrentWheel()">Save wheel</button><button class="btn btn-secondary" onclick="shareCurrentWheel()">Share</button><button class="btn btn-primary" onclick="togglePresentationMode()">Present</button></div></div>
             <div class="spinner-layout">
                 <div class="card glass flex-center flex-column wheel-wrapper">
                     <div class="wheel-pointer"></div>
                     <canvas id="wheelCanvas"></canvas>
+                    <div class="winner-strip" id="lastWinnerDisplay">Ready for a fair pick</div>
                     <button class="btn btn-primary btn-lg mt-1" id="spinBtn" onclick="spinWheel()">SPIN 🎯</button>
                 </div>
 
                 <div class="card glass control-panel">
                     <h3 data-i18n="participant_manager">Participants Manager</h3>
-                    <p class="text-muted text-sm mb-1">Enter names (one per line or separated by commas):</p>
+                    <p class="text-muted text-sm mb-1">One option per line. Your wheel is saved locally.</p>
                     <textarea id="namesInput" rows="8">Menghong
 Dara
 Sokha
@@ -304,6 +319,9 @@ Chan</textarea>
                         <label for="soundToggle">Sound effects</label>
                         <input type="checkbox" id="soundToggle" class="custom-checkbox" checked>
                     </div>
+                    <div class="toggle-control"><label for="removeWinnerToggle">Remove winner after spin</label><input type="checkbox" id="removeWinnerToggle" class="custom-checkbox"></div>
+                    <div class="control-row"><label for="spinDuration">Spin duration</label><select id="spinDuration"><option value="3000">Fast · 3 sec</option><option value="4500" selected>Classic · 4.5 sec</option><option value="6500">Dramatic · 6.5 sec</option></select></div>
+                    <div class="saved-wheel-note" id="savedWheelNote">Guest mode · stored on this device</div>
                 </div>
             </div>
         </section>
@@ -435,6 +453,18 @@ Pisey</textarea>
                 </div>
             </div>
         </section>
+
+        <section id="tab-classroom" class="tab-page">
+            <div class="page-heading"><div><span class="eyebrow">CLASSROOM MODE</span><h1>One calm place for the room</h1><p class="text-muted">Keep students, activities, and time in sync.</p></div></div>
+            <div class="classroom-banner card glass"><div><span class="greeting-badge">ACTIVE CLASS</span><h2>Web A2027</h2><p class="text-muted">32 students · Today, 09:00–10:30</p></div><button class="btn btn-primary" onclick="switchTab('spinner')">Pick a student</button></div>
+            <div class="feature-grid classroom-actions"><button class="feature-card" onclick="switchTab('teams')"><span class="feature-icon">♙</span><strong>Create teams</strong><small>Make balanced groups for today's activity.</small></button><button class="feature-card" onclick="switchTab('time')"><span class="feature-icon">◷</span><strong>Class timer</strong><small>Keep transitions visible and predictable.</small></button><button class="feature-card" onclick="switchTab('tools')"><span class="feature-icon">✣</span><strong>Random question</strong><small>Turn participation into a shared game.</small></button></div>
+        </section>
+
+        <section id="tab-ai" class="tab-page"><div class="page-heading"><div><span class="eyebrow">AI STUDIO / DEMO</span><h1>Describe the decision you need</h1><p class="text-muted">A private, API-ready idea generator with a useful local fallback.</p></div></div><div class="ai-studio card glass"><textarea id="aiPrompt" rows="3" placeholder="Create a wheel for classroom activities"></textarea><button class="btn btn-primary" onclick="generateAiWheel()">Generate wheel ↗</button><div class="ai-result" id="aiResult"><span class="feature-icon">✺</span><p>Try “Cambodian food”, “weekend activities”, or “study topics”.</p></div></div></section>
+
+        <section id="tab-statistics" class="tab-page"><div class="page-heading"><div><span class="eyebrow">INSIGHTS</span><h1>Your activity, at a glance</h1><p class="text-muted">Useful signals from this device's local workspace.</p></div></div><div class="grid-layout cols-4 analytics-grid"><div class="card glass"><span class="eyebrow">SPINS</span><strong class="analytics-value" id="analyticsSpins">0</strong><span class="text-muted">Decision moments</span></div><div class="card glass"><span class="eyebrow">TEAMS</span><strong class="analytics-value" id="analyticsTeams">0</strong><span class="text-muted">Groups created</span></div><div class="card glass"><span class="eyebrow">FOCUS</span><strong class="analytics-value" id="analyticsFocus">0m</strong><span class="text-muted">Deep work logged</span></div><div class="card glass"><span class="eyebrow">TOOLS</span><strong class="analytics-value" id="analyticsRandom">0</strong><span class="text-muted">Random picks</span></div></div><div class="card glass activity-chart"><div class="section-heading"><h2>Weekly rhythm</h2><span class="text-muted">Local activity</span></div><div class="bar-chart"><i style="height:35%"></i><i style="height:55%"></i><i style="height:28%"></i><i style="height:82%"></i><i style="height:64%"></i><i style="height:45%"></i><i style="height:72%"></i></div><div class="chart-labels"><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span></div></div></section>
+
+        <section id="tab-achievements" class="tab-page"><div class="page-heading"><div><span class="eyebrow">MOMENTUM</span><h1>Small wins add up</h1><p class="text-muted">Your workspace keeps the useful milestones close.</p></div></div><div class="level-card card glass"><div><span class="eyebrow">GUEST LEVEL</span><h2 id="achievementLevel">Level 1</h2><p class="text-muted">Keep making decisions and showing up.</p></div><div class="level-progress"><span id="achievementProgress">0 / 10 XP</span><div><i id="achievementBar"></i></div></div></div><div class="achievement-grid"><div class="achievement-item unlocked"><b>◉</b><strong>First spin</strong><small>Make your first decision.</small></div><div class="achievement-item"><b>♙</b><strong>Team master</strong><small>Create three teams.</small></div><div class="achievement-item"><b>◷</b><strong>Focus master</strong><small>Complete a focus session.</small></div></div></section>
 
     </main>
 
