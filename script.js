@@ -73,6 +73,16 @@ function playFanfareSound() {
     });
 }
 
+function speakWinner(winner) {
+    if (!document.getElementById('soundToggle').checked || !('speechSynthesis' in window)) return;
+
+    window.speechSynthesis.cancel();
+    const announcement = new SpeechSynthesisUtterance(`Wow, ${winner}`);
+    announcement.lang = 'en-US';
+    announcement.rate = 0.95;
+    window.speechSynthesis.speak(announcement);
+}
+
 // --- APP INITIALIZATION ---
 document.addEventListener('DOMContentLoaded', () => {
     initNavigation();
@@ -333,6 +343,7 @@ function selectWinner() {
     document.getElementById('winnerModal').classList.add('active');
     
     playFanfareSound();
+    speakWinner(winner);
     triggerConfetti();
     addHistory(`Spinner Winner: ${winner}`);
     state.stats.spins++;
