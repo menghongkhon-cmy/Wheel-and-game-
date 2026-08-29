@@ -289,40 +289,108 @@
         <!-- 3. RANDOM NAME SPINNER -->
         <section id="tab-spinner" class="tab-page">
             <div class="page-heading"><div><span class="eyebrow">WHEEL STUDIO</span><h1>Create a decision wheel</h1><p class="text-muted">Shape the list, set the rules, and let the room decide.</p></div><div class="page-actions"><button class="btn btn-secondary" onclick="saveCurrentWheel()">Save wheel</button><button class="btn btn-secondary" onclick="shareCurrentWheel()">Share</button><button class="btn btn-primary" onclick="togglePresentationMode()">Present</button></div></div>
-            <div class="spinner-layout">
-                <div class="card glass flex-center flex-column wheel-wrapper">
-                    <div class="wheel-pointer"></div>
-                    <canvas id="wheelCanvas"></canvas>
-                    <div class="winner-strip" id="lastWinnerDisplay">Ready for a fair pick</div>
-                    <button class="btn btn-primary btn-lg mt-1" id="spinBtn" onclick="spinWheel()">SPIN 🎯</button>
-                </div>
 
-                <div class="card glass control-panel">
-                    <h3 data-i18n="participant_manager">Participants Manager</h3>
-                    <p class="text-muted text-sm mb-1">One option per line. Your wheel is saved locally.</p>
-                    <textarea id="namesInput" rows="8">Menghong
+            <div class="subnav-tabs mb-2">
+                <button class="subtab-btn active" data-subtab="subtab-wheelstudio">🎡 Wheel Studio</button>
+                <button class="subtab-btn" data-subtab="subtab-quickspin">⚡ Quick Spin</button>
+            </div>
+
+            <div id="subtab-wheelstudio" class="subtab-content active">
+                <div class="spinner-layout">
+                    <div class="card glass flex-center flex-column wheel-wrapper">
+                        <div class="wheel-pointer"></div>
+                        <canvas id="wheelCanvas"></canvas>
+                        <div class="winner-strip" id="lastWinnerDisplay">Ready for a fair pick</div>
+                        <div class="wheel-spin-row">
+                            <button class="btn btn-primary btn-lg" id="spinBtn" onclick="startSpinSequence()">SPIN 🎯</button>
+                            <span class="text-muted text-sm">Press <kbd>Space</kbd> or <kbd>S</kbd> to spin</span>
+                        </div>
+                    </div>
+
+                    <div class="card glass control-panel">
+                        <div class="flex-between mb-1">
+                            <h3 data-i18n="participant_manager">Participants</h3>
+                            <span class="text-muted text-sm" id="entryCountLabel">0 active entries</span>
+                        </div>
+                        <div class="entry-list" id="entryList"></div>
+                        <div class="entry-toolbar">
+                            <button class="btn btn-sm btn-secondary" onclick="addEntryRow()">+ Add</button>
+                            <button class="btn btn-sm btn-secondary" onclick="openBulkImport()">Paste list</button>
+                            <button class="btn btn-sm btn-secondary" onclick="shuffleEntries()">Shuffle</button>
+                            <button class="btn btn-sm btn-secondary" onclick="sortEntries()">Sort A–Z</button>
+                            <button class="btn btn-sm btn-secondary" onclick="duplicateEntries()">Duplicate</button>
+                            <button class="btn btn-sm btn-danger" onclick="clearEntries()">Clear</button>
+                        </div>
+
+                        <hr class="divider">
+
+                        <div class="control-row"><label for="probMode">Probability</label>
+                            <select id="probMode" onchange="onWheelSettingChange()">
+                                <option value="equal">Equal chance</option>
+                                <option value="weighted">Weighted</option>
+                            </select>
+                        </div>
+                        <div class="control-row"><label for="winnersCount">Winners per spin</label>
+                            <input type="number" id="winnersCount" min="1" max="10" value="1">
+                        </div>
+                        <div class="toggle-control"><label for="removeWinnerToggle">Remove winner after spin</label><input type="checkbox" id="removeWinnerToggle" class="custom-checkbox"></div>
+                        <div class="toggle-control"><label for="allowDuplicateToggle">Allow duplicate winners</label><input type="checkbox" id="allowDuplicateToggle" class="custom-checkbox"></div>
+
+                        <div class="control-row"><label for="spinSpeed">Speed</label>
+                            <select id="spinSpeed" onchange="applySpeedPreset()">
+                                <option value="slow">Slow</option>
+                                <option value="normal" selected>Normal</option>
+                                <option value="fast">Fast</option>
+                                <option value="crazy">Crazy</option>
+                            </select>
+                        </div>
+                        <div class="control-row"><label for="spinDuration">Duration · <span id="spinDurationLabel">5s</span></label>
+                            <input type="range" id="spinDuration" min="1" max="60" value="5" oninput="onDurationSlide()">
+                        </div>
+                        <div class="control-row"><label for="countdownMode">Countdown</label>
+                            <select id="countdownMode">
+                                <option value="0">Off</option>
+                                <option value="3" selected>3 seconds</option>
+                                <option value="5">5 seconds</option>
+                                <option value="10">10 seconds</option>
+                            </select>
+                        </div>
+                        <div class="toggle-control"><label for="soundToggle">Sound effects</label><input type="checkbox" id="soundToggle" class="custom-checkbox" checked></div>
+
+                        <div class="saved-wheel-note" id="savedWheelNote">Guest mode · stored on this device</div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="subtab-quickspin" class="subtab-content">
+                <div class="card glass max-w-600 text-center">
+                    <h3>⚡ Quick Spin</h3>
+                    <p class="text-muted text-sm mb-1">Paste a list, hit spin, get a winner. No setup needed.</p>
+                    <textarea id="quickSpinInput" rows="8" placeholder="Name 1
+Name 2
+Name 3
+Name 4"></textarea>
+                    <button class="btn btn-primary btn-lg mt-1" onclick="quickSpin()">🎡 SPIN</button>
+                    <div class="result-box mt-1" id="quickSpinResult">—</div>
+                </div>
+            </div>
+
+            <div class="modal-overlay" id="bulkImportModal">
+                <div class="modal-card glass">
+                    <h3>Paste your list</h3>
+                    <p class="text-muted text-sm">One entry per line, or comma-separated. This replaces current entries.</p>
+                    <textarea id="bulkImportText" rows="10" placeholder="Menghong
 Dara
-Sokha
-Vanna
-Rina
-Pheak
-Chan</textarea>
-                    
-                    <div class="flex-center gap-1 mb-1">
-                        <button class="btn btn-sm btn-secondary" onclick="shuffleNames()">Shuffle</button>
-                        <button class="btn btn-sm btn-danger" onclick="clearNames()">Clear</button>
+Sokha"></textarea>
+                    <div class="flex-center gap-1 mt-2">
+                        <button class="btn btn-secondary" onclick="closeBulkImport()">Cancel</button>
+                        <button class="btn btn-primary" onclick="applyBulkImport()">Import</button>
                     </div>
-
-                    <hr class="divider">
-
-                    <div class="toggle-control">
-                        <label for="soundToggle">Sound effects</label>
-                        <input type="checkbox" id="soundToggle" class="custom-checkbox" checked>
-                    </div>
-                    <div class="toggle-control"><label for="removeWinnerToggle">Remove winner after spin</label><input type="checkbox" id="removeWinnerToggle" class="custom-checkbox"></div>
-                    <div class="control-row"><label for="spinDuration">Spin duration</label><select id="spinDuration"><option value="3000">Fast · 3 sec</option><option value="4500" selected>Classic · 4.5 sec</option><option value="6500">Dramatic · 6.5 sec</option></select></div>
-                    <div class="saved-wheel-note" id="savedWheelNote">Guest mode · stored on this device</div>
                 </div>
+            </div>
+
+            <div class="modal-overlay" id="countdownOverlay">
+                <div class="countdown-number" id="countdownNumber">3</div>
             </div>
         </section>
 
@@ -478,8 +546,11 @@ Pisey</textarea>
         <div class="modal-card glass text-center">
             <h2>🎉 CONGRATULATIONS! 🎉</h2>
             <div class="winner-name-display" id="modalWinnerName">Winner Name</div>
+            <div class="winner-extra-list" id="modalWinnerExtra"></div>
             <p>has been randomly selected!</p>
             <div class="flex-center gap-1 mt-2">
+                <button class="btn btn-secondary" onclick="spinAgainFromModal()">Spin Again</button>
+                <button class="btn btn-secondary" id="modalRemoveBtn" onclick="removeWinnerFromModal()">Remove Winner</button>
                 <button class="btn btn-primary" onclick="closeWinnerModal()">Close</button>
             </div>
         </div>
@@ -490,15 +561,20 @@ Pisey</textarea>
         <div class="modal-card glass">
             <h3>⌨️ Keyboard Shortcuts</h3>
             <ul class="shortcut-list">
-                <li><kbd>Space</kbd> Start / Pause Active Timer</li>
-                <li><kbd>S</kbd> Spin Wheel</li>
-                <li><kbd>Esc</kbd> Close Modals</li>
+                <li><kbd>Space</kbd> / <kbd>S</kbd> Spin the wheel (or start/pause active timer)</li>
+                <li><kbd>W</kbd> Go to Wheel</li>
+                <li><kbd>T</kbd> Go to Time Center</li>
+                <li><kbd>F</kbd> Toggle presentation / fullscreen</li>
+                <li><kbd>Esc</kbd> Close modals / exit presentation</li>
             </ul>
             <div class="text-center mt-2">
                 <button class="btn btn-secondary" onclick="closeShortcutsModal()">Close</button>
             </div>
         </div>
     </div>
+
+    <!-- TOAST CONTAINER -->
+    <div class="toast-container" id="toastContainer"></div>
 
 
    
