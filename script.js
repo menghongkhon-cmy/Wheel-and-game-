@@ -103,10 +103,14 @@ function initNavigation() {
 
     document.querySelectorAll('.subtab-btn').forEach(btn => {
         btn.addEventListener('click', () => {
-            document.querySelectorAll('.subtab-btn').forEach(b => b.classList.remove('active'));
-            document.querySelectorAll('.subtab-content').forEach(c => c.classList.remove('active'));
+            const group = btn.closest('.tab-page');
+            const scopeBtns = group ? group.querySelectorAll('.subtab-btn') : document.querySelectorAll('.subtab-btn');
+            const scopeContent = group ? group.querySelectorAll('.subtab-content') : document.querySelectorAll('.subtab-content');
+            scopeBtns.forEach(b => b.classList.remove('active'));
+            scopeContent.forEach(c => c.classList.remove('active'));
             btn.classList.add('active');
             document.getElementById(btn.dataset.subtab).classList.add('active');
+            if (btn.dataset.subtab === 'subtab-wheelstudio') drawWheel();
         });
     });
 
@@ -134,18 +138,31 @@ function closeShortcutsModal() {
 function setupShortcuts() {
     window.addEventListener('keydown', (e) => {
         if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+        const spinnerActive = document.getElementById('tab-spinner').classList.contains('active');
+        const wheelStudioActive = document.getElementById('subtab-wheelstudio')?.classList.contains('active');
+        const quickSpinActive = document.getElementById('subtab-quickspin')?.classList.contains('active');
+
         if (e.code === 'Space') {
             e.preventDefault();
+            if (spinnerActive && wheelStudioActive) return startSpinSequence();
+            if (spinnerActive && quickSpinActive) return quickSpin();
             const activeSub = document.querySelector('.subtab-content.active');
             if (activeSub && activeSub.id === 'subtab-timer') toggleTimer();
             else if (activeSub && activeSub.id === 'subtab-stopwatch') toggleStopwatch();
             else if (activeSub && activeSub.id === 'subtab-pomodoro') togglePomo();
         } else if (e.code === 'KeyS') {
-            const spinPage = document.getElementById('tab-spinner');
-            if (spinPage.classList.contains('active')) spinWheel();
+            if (spinnerActive) startSpinSequence();
+        } else if (e.code === 'KeyW') {
+            switchTab('spinner');
+        } else if (e.code === 'KeyT') {
+            switchTab('time');
+        } else if (e.code === 'KeyF') {
+            togglePresentationMode();
         } else if (e.code === 'Escape') {
             closeWinnerModal();
             closeShortcutsModal();
+            closeBulkImport();
+            if (document.body.classList.contains('presentation-mode')) togglePresentationMode();
         }
     });
 }
@@ -215,57 +232,248 @@ const colors = ['#ef4444', '#f97316', '#f59e0b', '#10b981', '#06b6d4', '#6366f1'
 let spinAngle = 0;
 let isSpinning = false;
 let lastTickIndex = -1;
+let glowSliceIndex = -1;
+let wheelEntries = [];
+let pendingWinners = [];
+
+// --- TOAST NOTIFICATIONS ---
+function showToast(message) {
+    const container = document.getElementById('toastContainer');
+    if (!container) { console.log(message); return; }
+    const toast = document.createElement('div');
+    toast.className = 'toast';
+    toast.textContent = message;
+    container.appendChild(toast);
+    requestAnimationFrame(() => toast.classList.add('show'));
+    setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => toast.remove(), 300);
+    }, 3200);
+}
+
+function escapeAttr(str) {
+    return String(str).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function cryptoId() {
+    if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
+    return 'e' + Math.random().toString(36).slice(2) + Date.now().toString(36);
+}
+
+function secureRandom() {
+    if (window.crypto && crypto.getRandomValues) {
+        const buf = new Uint32Array(1);
+        crypto.getRandomValues(buf);
+        return buf[0] / 4294967296;
+    }
+    return Math.random();
+}
+
+function makeEntry(label, colorIndex) {
+    return { id: cryptoId(), label: String(label).slice(0, 60), color: colors[colorIndex % colors.length], weight: 1, enabled: true };
+}
 
 function initSpinnerModule() {
-    const savedNames = JSON.parse(localStorage.getItem('ts_saved_wheel') || 'null');
-    if (Array.isArray(savedNames) && savedNames.length) document.getElementById('namesInput').value = savedNames.join('\n');
+    loadWheelEntries();
+    renderEntryList();
+    document.getElementById('winnersCount').addEventListener('change', onWheelSettingChange);
+    document.getElementById('probMode').addEventListener('change', onWheelSettingChange);
+    window.addEventListener('resize', drawWheel);
+    onDurationSlide();
+    drawWheel();
+}
+
+function loadWheelEntries() {
     const sharedWheel = new URLSearchParams(location.search).get('wheel');
     if (sharedWheel) {
         try {
-            const sharedNames = JSON.parse(decodeURIComponent(escape(atob(sharedWheel))));
-            if (Array.isArray(sharedNames) && sharedNames.length) document.getElementById('namesInput').value = sharedNames.filter(name => typeof name === 'string').join('\n');
+            const decoded = JSON.parse(decodeURIComponent(escape(atob(sharedWheel))));
+            if (Array.isArray(decoded) && decoded.length) {
+                wheelEntries = decoded.slice(0, 200).map((item, i) => {
+                    if (typeof item === 'string') return makeEntry(item, i);
+                    return { id: cryptoId(), label: String(item.label || 'Option').slice(0, 60), color: /^#[0-9a-fA-F]{6}$/.test(item.color) ? item.color : colors[i % colors.length], weight: Math.max(1, Math.min(99, parseInt(item.weight, 10) || 1)), enabled: true };
+                });
+                saveWheelEntries();
+                showToast('Shared wheel loaded');
+                return;
+            }
         } catch (error) {
             showToast('This wheel link could not be opened');
         }
     }
-    document.getElementById('namesInput').addEventListener('input', drawWheel);
-    window.addEventListener('resize', drawWheel);
+    const savedV2 = JSON.parse(localStorage.getItem('ts_wheel_entries_v2') || 'null');
+    if (Array.isArray(savedV2) && savedV2.length) { wheelEntries = savedV2; return; }
+    const legacy = JSON.parse(localStorage.getItem('ts_saved_wheel') || 'null');
+    if (Array.isArray(legacy) && legacy.length) { wheelEntries = legacy.map((n, i) => makeEntry(n, i)); return; }
+    wheelEntries = ['Menghong', 'Dara', 'Sokha', 'Vanna', 'Rina', 'Pheak', 'Chan'].map((n, i) => makeEntry(n, i));
+}
+
+function saveWheelEntries() {
+    localStorage.setItem('ts_wheel_entries_v2', JSON.stringify(wheelEntries));
+}
+
+function getActiveEntries() {
+    return wheelEntries.filter(e => e.enabled && e.label && e.label.trim().length);
+}
+
+function renderEntryList() {
+    const container = document.getElementById('entryList');
+    if (!container) return;
+    const weighted = document.getElementById('probMode')?.value === 'weighted';
+    container.innerHTML = wheelEntries.map(e => `
+        <div class="entry-row ${e.enabled ? '' : 'entry-disabled'}" data-id="${e.id}">
+            <input type="color" class="entry-color" value="${e.color}" onchange="updateEntry('${e.id}',{color:this.value})" aria-label="Entry color">
+            <input type="text" class="entry-text" value="${escapeAttr(e.label)}" oninput="updateEntry('${e.id}',{label:this.value})" placeholder="Entry" maxlength="60" aria-label="Entry name">
+            ${weighted ? `<input type="number" class="entry-weight" min="1" max="99" value="${e.weight}" onchange="updateEntry('${e.id}',{weight: Math.max(1, Math.min(99, parseInt(this.value,10)||1))})" title="Weight" aria-label="Entry weight">` : ''}
+            <input type="checkbox" class="entry-enable" ${e.enabled ? 'checked' : ''} onchange="updateEntry('${e.id}',{enabled:this.checked}); renderEntryList();" title="Enabled" aria-label="Enable entry">
+            <button class="entry-delete" onclick="deleteEntry('${e.id}')" aria-label="Delete entry">✕</button>
+        </div>
+    `).join('') || `<p class="text-muted text-sm">No entries yet. Add at least 2 to spin.</p>`;
+    updateEntryCountLabel();
     drawWheel();
 }
 
-function getNamesList() {
-    const raw = document.getElementById('namesInput').value;
-    return raw.split(/[\n,]+/).map(n => n.trim()).filter(n => n.length > 0);
+function updateEntryCountLabel() {
+    const label = document.getElementById('entryCountLabel');
+    if (label) label.textContent = `${getActiveEntries().length} active entries`;
+}
+
+function updateEntry(id, patch) {
+    const entry = wheelEntries.find(e => e.id === id);
+    if (!entry) return;
+    Object.assign(entry, patch);
+    saveWheelEntries();
+    updateEntryCountLabel();
+    drawWheel();
+}
+
+function deleteEntry(id) {
+    wheelEntries = wheelEntries.filter(e => e.id !== id);
+    saveWheelEntries();
+    renderEntryList();
+}
+
+function addEntryRow() {
+    wheelEntries.push(makeEntry('New option', wheelEntries.length));
+    saveWheelEntries();
+    renderEntryList();
+}
+
+function shuffleEntries() {
+    for (let i = wheelEntries.length - 1; i > 0; i--) {
+        const j = Math.floor(secureRandom() * (i + 1));
+        [wheelEntries[i], wheelEntries[j]] = [wheelEntries[j], wheelEntries[i]];
+    }
+    saveWheelEntries();
+    renderEntryList();
+}
+
+function sortEntries() {
+    wheelEntries.sort((a, b) => a.label.localeCompare(b.label));
+    saveWheelEntries();
+    renderEntryList();
+}
+
+function duplicateEntries() {
+    wheelEntries = wheelEntries.concat(wheelEntries.map(e => ({ ...e, id: cryptoId() })));
+    saveWheelEntries();
+    renderEntryList();
+    showToast('Entries duplicated');
+}
+
+function clearEntries() {
+    wheelEntries = [];
+    saveWheelEntries();
+    renderEntryList();
+}
+
+function onWheelSettingChange() {
+    renderEntryList();
+}
+
+function applySpeedPreset() {
+    const speed = document.getElementById('spinSpeed').value;
+    const map = { slow: 20, normal: 8, fast: 4, crazy: 1.5 };
+    document.getElementById('spinDuration').value = map[speed] || 8;
+    onDurationSlide();
+}
+
+function onDurationSlide() {
+    const v = document.getElementById('spinDuration').value;
+    document.getElementById('spinDurationLabel').textContent = `${v}s`;
+}
+
+function openBulkImport() {
+    document.getElementById('bulkImportText').value = wheelEntries.map(e => e.label).join('\n');
+    document.getElementById('bulkImportModal').classList.add('active');
+}
+
+function closeBulkImport() {
+    document.getElementById('bulkImportModal')?.classList.remove('active');
+}
+
+function applyBulkImport() {
+    const raw = document.getElementById('bulkImportText').value;
+    const list = raw.split(/[\n,]+/).map(s => s.trim()).filter(Boolean).slice(0, 200);
+    if (!list.length) return showToast('Add at least one entry');
+    wheelEntries = list.map((label, i) => makeEntry(label, i));
+    saveWheelEntries();
+    renderEntryList();
+    closeBulkImport();
+    showToast(`Imported ${list.length} entries`);
+}
+
+// --- SLICE MATH (winner is chosen BEFORE the wheel animates) ---
+function computeSlices(entries) {
+    const weighted = document.getElementById('probMode')?.value === 'weighted';
+    const total = weighted ? entries.reduce((s, e) => s + (e.weight || 1), 0) : entries.length;
+    let cursor = 0;
+    return entries.map(e => {
+        const w = weighted ? (e.weight || 1) : 1;
+        const arc = (w / total) * 2 * Math.PI;
+        const slice = { entry: e, start: cursor, arc, weight: w };
+        cursor += arc;
+        return slice;
+    });
+}
+
+function pickWeightedIndex(slices) {
+    const totalWeight = slices.reduce((s, sl) => s + sl.weight, 0);
+    const r = secureRandom() * totalWeight;
+    let cumulative = 0;
+    for (let i = 0; i < slices.length; i++) {
+        cumulative += slices[i].weight;
+        if (r <= cumulative) return i;
+    }
+    return slices.length - 1;
 }
 
 function drawWheel() {
     const canvas = document.getElementById('wheelCanvas');
+    if (!canvas) return;
     const ctx = canvas.getContext('2d');
-    const names = getNamesList();
-    
-    // Canvas Scaling
+    const entries = getActiveEntries();
+
     const dpr = window.devicePixelRatio || 1;
     const size = 440;
     canvas.width = size * dpr;
     canvas.height = size * dpr;
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.scale(dpr, dpr);
 
     const center = size / 2;
     const radius = center - 12;
-
     ctx.clearRect(0, 0, size, size);
-    if (names.length === 0) return;
+    if (entries.length === 0) return;
 
-    const arc = (2 * Math.PI) / names.length;
+    const slices = computeSlices(entries);
 
-    names.forEach((name, i) => {
-        const angle = spinAngle + i * arc;
-        
-        // Slice
+    slices.forEach((slice, i) => {
+        const angle = spinAngle + slice.start;
         ctx.beginPath();
-        ctx.fillStyle = colors[i % colors.length];
+        ctx.fillStyle = slice.entry.color;
         ctx.moveTo(center, center);
-        ctx.arc(center, center, radius, angle, angle + arc);
+        ctx.arc(center, center, radius, angle, angle + slice.arc);
         ctx.lineTo(center, center);
         ctx.fill();
 
@@ -273,129 +481,215 @@ function drawWheel() {
         ctx.lineWidth = 2;
         ctx.stroke();
 
-        // Optimized Outer Text Alignment
         ctx.save();
         ctx.translate(center, center);
-        
-        let midAngle = angle + arc / 2;
+        let midAngle = angle + slice.arc / 2;
         ctx.rotate(midAngle);
         ctx.textAlign = "right";
         ctx.fillStyle = "#ffffff";
         ctx.font = "bold 15px system-ui";
 
-        // Flip text if on left side
         let rad = (midAngle % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI);
+        const label = slice.entry.label.length > 16 ? slice.entry.label.slice(0, 15) + '…' : slice.entry.label;
         if (rad > Math.PI / 2 && rad < (3 * Math.PI) / 2) {
             ctx.rotate(Math.PI);
             ctx.textAlign = "left";
-            ctx.fillText(name, -radius + 20, 5);
+            ctx.fillText(label, -radius + 20, 5);
         } else {
-            ctx.fillText(name, radius - 20, 5);
+            ctx.fillText(label, radius - 20, 5);
         }
         ctx.restore();
+
+        if (glowSliceIndex === i) {
+            ctx.save();
+            ctx.beginPath();
+            ctx.moveTo(center, center);
+            ctx.arc(center, center, radius, angle, angle + slice.arc);
+            ctx.closePath();
+            ctx.lineWidth = 5;
+            ctx.strokeStyle = "#ffffff";
+            ctx.shadowColor = "#ffffff";
+            ctx.shadowBlur = 18;
+            ctx.stroke();
+            ctx.restore();
+        }
     });
 
-    // Center Cap
     ctx.beginPath();
     ctx.arc(center, center, 28, 0, 2 * Math.PI);
     ctx.fillStyle = "#ffffff";
     ctx.shadowColor = "rgba(0,0,0,0.3)";
     ctx.shadowBlur = 10;
     ctx.fill();
+    ctx.shadowBlur = 0;
 }
 
-function spinWheel() {
+function startSpinSequence() {
     if (isSpinning) return;
-    const names = getNamesList();
-    if (names.length === 0) return;
+    const entries = getActiveEntries();
+    if (entries.length < 2) return showToast('Add at least 2 options to spin the wheel.');
+    const winnersCount = Math.min(10, Math.max(1, parseInt(document.getElementById('winnersCount').value, 10) || 1));
+    const countdownSecs = parseInt(document.getElementById('countdownMode').value, 10) || 0;
+    pendingWinners = [];
+    runCountdownThenSpin(winnersCount, countdownSecs);
+}
+
+function runCountdownThenSpin(winnersRemaining, countdownSecs) {
+    if (countdownSecs <= 0) return spinOnce(winnersRemaining);
+    const overlay = document.getElementById('countdownOverlay');
+    const numEl = document.getElementById('countdownNumber');
+    overlay.classList.add('active');
+    let n = countdownSecs;
+    numEl.textContent = n;
+    const iv = setInterval(() => {
+        n--;
+        if (n > 0) { numEl.textContent = n; playTickSound(); }
+        else {
+            numEl.textContent = 'GO!';
+            clearInterval(iv);
+            setTimeout(() => { overlay.classList.remove('active'); spinOnce(winnersRemaining); }, 350);
+        }
+    }, 1000);
+}
+
+function spinOnce(winnersRemaining) {
+    const entries = getActiveEntries();
+    if (entries.length === 0) return finishSpinSequence();
+
+    const slices = computeSlices(entries);
+    const winnerSliceIndex = pickWeightedIndex(slices);
+    const winnerSlice = slices[winnerSliceIndex];
+    const winner = winnerSlice.entry;
 
     isSpinning = true;
     lastTickIndex = -1;
-    let duration = parseInt(document.getElementById('spinDuration')?.value, 10) || 4500;
+    glowSliceIndex = -1;
+    document.getElementById('spinBtn').disabled = true;
+
+    const duration = (parseFloat(document.getElementById('spinDuration').value) || 5) * 1000;
+    const fullTurns = Math.floor(secureRandom() * 6) + 8;
+    const margin = winnerSlice.arc * 0.15;
+    const offsetInSlice = margin + secureRandom() * Math.max(0.0001, winnerSlice.arc - margin * 2);
+
+    const TWO_PI = 2 * Math.PI;
+    const targetB = (winnerSlice.start + offsetInSlice) % TWO_PI;
+    const targetA = ((targetB - Math.PI / 2) % TWO_PI + TWO_PI) % TWO_PI;
+    const finalMod = (TWO_PI - targetA) % TWO_PI;
+    const totalRotation = fullTurns * TWO_PI + finalMod;
+
+    const startAngle = ((spinAngle % TWO_PI) + TWO_PI) % TWO_PI;
     let start = null;
-    const totalRotation = (Math.random() * 8 + 12) * 2 * Math.PI;
 
-    function animate(timestamp) {
-        if (!start) start = timestamp;
-        let progress = (timestamp - start) / duration;
+    function animate(ts) {
+        if (!start) start = ts;
+        let progress = (ts - start) / duration;
         if (progress > 1) progress = 1;
-
         const easeOut = 1 - Math.pow(1 - progress, 4);
-        spinAngle = easeOut * totalRotation;
+        spinAngle = startAngle + easeOut * totalRotation;
         drawWheel();
 
-        // Tick Sound Calculation
-        const arc = (2 * Math.PI) / names.length;
-        let currentTickIndex = Math.floor((spinAngle % (2 * Math.PI)) / arc);
-        if (currentTickIndex !== lastTickIndex) {
-            playTickSound();
-            lastTickIndex = currentTickIndex;
-        }
+        const arcApprox = TWO_PI / entries.length;
+        const tickIndex = Math.floor((spinAngle % TWO_PI) / Math.max(arcApprox, 0.01));
+        if (tickIndex !== lastTickIndex) { playTickSound(); lastTickIndex = tickIndex; }
 
         if (progress < 1) {
             requestAnimationFrame(animate);
         } else {
             isSpinning = false;
-            selectWinner();
+            document.getElementById('spinBtn').disabled = false;
+            glowSliceIndex = winnerSliceIndex;
+            drawWheel();
+            onWinnerLanded(winner, winnersRemaining);
         }
     }
     requestAnimationFrame(animate);
 }
 
-function selectWinner() {
-    const names = getNamesList();
-    const arc = (2 * Math.PI) / names.length;
-    let normalized = (2 * Math.PI - (spinAngle % (2 * Math.PI))) % (2 * Math.PI);
-    normalized = (normalized + Math.PI / 2) % (2 * Math.PI);
-    const index = Math.floor(normalized / arc) % names.length;
-    const winner = names[index];
-
-    document.getElementById('modalWinnerName').textContent = winner;
-    document.getElementById('lastWinnerDisplay').textContent = `Last winner · ${winner}`;
-    document.getElementById('winnerModal').classList.add('active');
-    
-    playFanfareSound();
-    speakWinner(winner);
-    triggerConfetti();
-    addHistory(`Spinner Winner: ${winner}`);
+function onWinnerLanded(winner, winnersRemaining) {
+    pendingWinners.push(winner);
     state.stats.spins++;
     saveStats();
+    addHistory(`Spinner Winner: ${winner.label}`);
+    playFanfareSound();
+    speakWinner(winner.label);
+    triggerConfetti();
 
-    if (document.getElementById('removeWinnerToggle')?.checked) {
-        names.splice(index, 1);
-        document.getElementById('namesInput').value = names.join('\n');
+    const removeWinner = document.getElementById('removeWinnerToggle').checked;
+    const allowDuplicates = document.getElementById('allowDuplicateToggle').checked;
+    if (removeWinner && !allowDuplicates) {
+        updateEntry(winner.id, { enabled: false });
+        renderEntryList();
     }
-    drawWheel();
+
+    const remaining = winnersRemaining - 1;
+    if (remaining > 0 && getActiveEntries().length > 0) {
+        setTimeout(() => spinOnce(remaining), 900);
+    } else {
+        finishSpinSequence();
+    }
+}
+
+function finishSpinSequence() {
+    if (!pendingWinners.length) return;
+    const first = pendingWinners[0];
+    document.getElementById('modalWinnerName').textContent = first.label;
+    document.getElementById('lastWinnerDisplay').textContent = `Last winner · ${first.label}`;
+    const extra = document.getElementById('modalWinnerExtra');
+    extra.innerHTML = pendingWinners.length > 1
+        ? pendingWinners.slice(1).map(w => `<span class="winner-chip">${escapeAttr(w.label)}</span>`).join('')
+        : '';
+    document.getElementById('modalRemoveBtn').style.display = document.getElementById('removeWinnerToggle').checked ? 'none' : 'inline-flex';
+    document.getElementById('winnerModal').classList.add('active');
+}
+
+function spinAgainFromModal() {
+    closeWinnerModal();
+    startSpinSequence();
+}
+
+function removeWinnerFromModal() {
+    const last = pendingWinners[pendingWinners.length - 1];
+    if (last) {
+        updateEntry(last.id, { enabled: false });
+        renderEntryList();
+        showToast(`${last.label} removed from the wheel`);
+    }
+    closeWinnerModal();
 }
 
 function closeWinnerModal() {
     document.getElementById('winnerModal').classList.remove('active');
-}
-
-function shuffleNames() {
-    const names = getNamesList().sort(() => Math.random() - 0.5);
-    document.getElementById('namesInput').value = names.join('\n');
+    glowSliceIndex = -1;
     drawWheel();
 }
 
-function clearNames() {
-    document.getElementById('namesInput').value = '';
-    drawWheel();
+// --- QUICK SPIN ---
+function quickSpin() {
+    const raw = document.getElementById('quickSpinInput').value;
+    const list = raw.split(/[\n,]+/).map(s => s.trim()).filter(Boolean);
+    if (list.length < 2) return showToast('Add at least 2 options to spin.');
+    const idx = Math.floor(secureRandom() * list.length);
+    const winner = list[idx];
+    document.getElementById('quickSpinResult').textContent = winner;
+    playFanfareSound();
+    triggerConfetti();
+    addHistory(`Quick Spin Winner: ${winner}`);
+    state.stats.spins++;
+    saveStats();
 }
 
 function saveCurrentWheel() {
-    const names = getNamesList();
-    if (names.length < 2) return showToast('Add at least 2 options first');
-    localStorage.setItem('ts_saved_wheel', JSON.stringify(names));
+    if (getActiveEntries().length < 2) return showToast('Add at least 2 options first');
+    saveWheelEntries();
     const note = document.getElementById('savedWheelNote');
-    if (note) note.textContent = `Saved locally · ${names.length} options`;
+    if (note) note.textContent = `Saved locally · ${wheelEntries.length} options`;
     showToast('Wheel saved successfully');
 }
 
 function shareCurrentWheel() {
-    const names = getNamesList();
-    if (names.length < 2) return showToast('Add at least 2 options first');
-    const payload = btoa(unescape(encodeURIComponent(JSON.stringify(names))));
+    const entries = getActiveEntries();
+    if (entries.length < 2) return showToast('Add at least 2 options first');
+    const payload = btoa(unescape(encodeURIComponent(JSON.stringify(entries.map(e => ({ label: e.label, color: e.color, weight: e.weight }))))));
     const link = `${location.origin}${location.pathname}?wheel=${payload}`;
     if (navigator.clipboard) navigator.clipboard.writeText(link);
     showToast('Share link copied');
@@ -403,7 +697,13 @@ function shareCurrentWheel() {
 
 function togglePresentationMode() {
     document.body.classList.toggle('presentation-mode');
-    if (document.body.classList.contains('presentation-mode')) switchTab('spinner');
+    if (document.body.classList.contains('presentation-mode')) {
+        switchTab('spinner');
+        document.querySelector('.subtab-btn[data-subtab="subtab-wheelstudio"]')?.click();
+        if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(() => {});
+    } else if (document.fullscreenElement) {
+        document.exitFullscreen().catch(() => {});
+    }
 }
 
 function generateAiWheel() {
@@ -415,9 +715,11 @@ function generateAiWheel() {
 
 function useAiWheel() {
     if (!window.generatedAiWheel) return;
-    document.getElementById('namesInput').value = window.generatedAiWheel.join('\n');
-    drawWheel();
+    wheelEntries = window.generatedAiWheel.map((label, i) => makeEntry(label, i));
+    saveWheelEntries();
+    renderEntryList();
     switchTab('spinner');
+    document.querySelector('.subtab-btn[data-subtab="subtab-wheelstudio"]')?.click();
 }
 
 // --- TEAM GENERATOR ---
