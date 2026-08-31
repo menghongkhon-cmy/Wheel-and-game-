@@ -94,6 +94,9 @@ document.addEventListener('DOMContentLoaded', () => {
     renderStats();
     renderHistory();
     setupShortcuts();
+
+    const hashTab = location.hash.replace('#tab-', '');
+    if (hashTab && document.getElementById(`tab-${hashTab}`)) switchTab(hashTab);
 });
 
 function initNavigation() {

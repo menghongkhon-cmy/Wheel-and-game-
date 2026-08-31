@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<!-- Primary Search Engine Meta Tags -->
+<title>Time Spinner – Random Time Generator & Picker | TIME SPIN</title>
+<meta name="title" content="Time Spinner – Random Time Generator & Picker | TIME SPIN">
+<meta name="description" content="Free online Time Spinner that randomly picks a time between your chosen start and end time. Perfect for students, teachers, meetings, games, and activities. កង់ជ្រើសរើសពេលវេលាចៃដន្យ។">
+<meta name="keywords" content="time spinner, random time generator, random time picker, spin the wheel time, class time picker, time spin pro, កង់ចៃដន្យ, ជ្រើសរើសពេលវេលា, កង់បង្វិល, ឧបករណ៍ចៃដន្យ">
+<meta name="robots" content="index, follow">
+<meta name="author" content="TIME SPIN">
+<link rel="canonical" href="https://wheel-khm.vercel.app/time-spinner.html">
+
+<!-- Open Graph -->
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://wheel-khm.vercel.app/time-spinner.html">
+<meta property="og:title" content="Time Spinner – Random Time Generator & Picker | TIME SPIN">
+<meta property="og:description" content="Set a start time, end time, and interval — then spin the wheel for a random time slot. Free, fast, and works on any device.">
+<meta property="og:image" content="https://wheel-khm.vercel.app/logo.png">
+<meta property="og:image:alt" content="TIME SPIN Time Spinner tool">
+<meta property="og:site_name" content="TIME SPIN">
+
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:url" content="https://wheel-khm.vercel.app/time-spinner.html">
+<meta name="twitter:title" content="Time Spinner – Random Time Generator & Picker | TIME SPIN">
+<meta name="twitter:description" content="Set a start time, end time, and interval — then spin the wheel for a random time slot. Free, fast, and works on any device.">
+<meta name="twitter:image" content="https://wheel-khm.vercel.app/logo.png">
+
+<!-- Icons -->
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="shortcut icon" href="favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="logo.png">
+
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="time-spinner.css">
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://wheel-khm.vercel.app/" },
+        { "@type": "ListItem", "position": 2, "name": "Random Tools", "item": "https://wheel-khm.vercel.app/#tab-tools" },
+        { "@type": "ListItem", "position": 3, "name": "Time Spinner", "item": "https://wheel-khm.vercel.app/time-spinner.html" }
+      ]
+    },
+    {
+      "@type": "WebApplication",
+      "@id": "https://wheel-khm.vercel.app/time-spinner.html#webapp",
+      "name": "Time Spinner",
+      "url": "https://wheel-khm.vercel.app/time-spinner.html",
+      "applicationCategory": "UtilityApplication",
+      "operatingSystem": "All",
+      "description": "Randomly picks a time between a chosen start and end time using an interactive spinning wheel.",
+      "isPartOf": { "@id": "https://wheel-khm.vercel.app/#organization" },
+      "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+    },
+    {
+      "@type": "FAQPage",
+      "mainEntity": [
+        { "@type": "Question", "name": "What does the Time Spinner do?", "acceptedAnswer": { "@type": "Answer", "text": "It builds a list of evenly spaced time slots between a start and end time you choose, then spins a wheel to land on one at random." } },
+        { "@type": "Question", "name": "Can I choose the interval between times?", "acceptedAnswer": { "@type": "Answer", "text": "Yes. Pick 5, 10, 15, or 30 minute steps, or a full 1 hour step, and the tool generates every slot in that range." } },
+        { "@type": "Question", "name": "What happens if the range doesn't divide evenly?", "acceptedAnswer": { "@type": "Answer", "text": "The tool stops at the last slot that fits inside your end time, so you never get a time past the range you set." } },
+        { "@type": "Question", "name": "Is the result actually random?", "acceptedAnswer": { "@type": "Answer", "text": "Yes. The winning slot is chosen using the browser's cryptographic random number generator before the wheel animation starts." } },
+        { "@type": "Question", "name": "Does it save my results?", "acceptedAnswer": { "@type": "Answer", "text": "Your most recent results are saved in your browser's local storage so you can glance back at them, and nothing is sent to a server." } },
+        { "@type": "Question", "name": "Can I use this for classroom or meeting scheduling?", "acceptedAnswer": { "@type": "Answer", "text": "Yes, it's commonly used to pick presentation slots, break times, or meeting start times fairly and quickly." } },
+        { "@type": "Question", "name": "Does it work on mobile?", "acceptedAnswer": { "@type": "Answer", "text": "Yes, the wheel and controls are fully responsive and touch-friendly on phones, tablets, and desktops." } },
+        { "@type": "Question", "name": "Is the Time Spinner free to use?", "acceptedAnswer": { "@type": "Answer", "text": "Yes, it's completely free with no sign-up required." } }
+      ]
+    }
+  ]
+}
+</script>
+</head>
+<body>
+
+<canvas id="confettiCanvas"></canvas>
+
+<header class="glass ts-simple-nav">
+    <a class="logo" href="/">
+        <img src="logo.png" alt="TIME SPIN logo" width="34" height="34">
+        <span>TIME SPIN</span>
+    </a>
+    <div class="flex-center gap-1">
+        <button class="icon-btn" id="langToggle" aria-label="Toggle Language">🇰🇭 ខ្មែរ</button>
+        <button class="icon-btn" id="themeToggle" aria-label="Toggle Theme">🌙</button>
+        <a class="btn btn-secondary" href="/">← All tools</a>
+    </div>
+</header>
+
+<main class="app-main" style="margin-left:0; width:100%; max-width:1180px; margin-inline:auto;">
+
+    <nav class="ts-breadcrumb" aria-label="Breadcrumb">
+        <a href="/">Home</a> / <a href="/#tab-tools">Random Tools</a> / <span data-i18n="bc_current">Time Spinner</span>
+    </nav>
+
+    <div class="page-heading">
+        <div>
+            <span class="eyebrow">RANDOM TOOLS</span>
+            <h1 data-i18n="h1">Time Spinner — Random Time Generator</h1>
+            <p class="text-muted" data-i18n="subtitle">Pick a start time, end time, and interval, then spin the wheel for a fair, random time.</p>
+        </div>
+    </div>
+
+    <!-- Ad: top banner -->
+    <div class="ts-ad-slot ts-ad-banner" role="complementary" aria-label="Advertisement">Advertisement space</div>
+
+    <section class="ts-layout" id="tool" aria-label="Time Spinner tool">
+
+        <!-- WHEEL -->
+        <div class="card glass ts-wheel-card">
+            <div class="ts-wheel-wrap">
+                <div class="ts-pointer"></div>
+                <canvas id="tsWheelCanvas"></canvas>
+            </div>
+            <div class="ts-result-strip" id="tsResultStrip" data-i18n="ready">Ready to spin</div>
+            <button class="btn btn-primary btn-lg" id="tsSpinBtn" data-i18n="spin_btn">SPIN 🎯</button>
+            <div class="ts-actions-row">
+                <button class="btn btn-sm btn-secondary" id="tsMuteBtn" aria-label="Toggle sound">🔊 <span data-i18n="sound">Sound</span></button>
+                <button class="btn btn-sm btn-secondary" id="tsResetBtn" data-i18n="reset_btn">Reset</button>
+                <button class="btn btn-sm btn-secondary" id="tsCopyBtn" data-i18n="copy_btn">Copy result</button>
+                <button class="btn btn-sm btn-secondary" id="tsShareBtn" data-i18n="share_btn">Share result</button>
+            </div>
+            <div class="ts-countdown-line" id="tsCountdown"></div>
+            <div id="tsRecentWrap" style="display:none; width:100%;">
+                <hr class="divider">
+                <span class="text-muted text-sm" data-i18n="recent_label">Recent results</span>
+                <div class="ts-recent-list" id="tsRecentList"></div>
+            </div>
+        </div>
+
+        <!-- CONTROLS -->
+        <div class="card glass">
+            <h3 data-i18n="settings_title">Time range</h3>
+            <div class="ts-form-grid">
+                <div class="ts-field">
+                    <label for="tsStart" data-i18n="start_time">Start time</label>
+                    <input type="time" id="tsStart" value="08:00">
+                </div>
+                <div class="ts-field">
+                    <label for="tsEnd" data-i18n="end_time">End time</label>
+                    <input type="time" id="tsEnd" value="17:00">
+                </div>
+                <div class="ts-field ts-field-full">
+                    <label for="tsInterval" data-i18n="interval">Interval</label>
+                    <select id="tsInterval">
+                        <option value="5">5 minutes</option>
+                        <option value="10">10 minutes</option>
+                        <option value="15">15 minutes</option>
+                        <option value="30" selected>30 minutes</option>
+                        <option value="60">1 hour</option>
+                    </select>
+                </div>
+            </div>
+            <button class="btn btn-primary mt-1" id="tsGenerateBtn" data-i18n="generate_btn">Generate time slots</button>
+            <div class="ts-slot-preview" id="tsSlotPreview">
+                <span class="ts-slot-empty" data-i18n="no_slots">No time slots yet — generate to see them here.</span>
+            </div>
+            <p class="text-muted text-sm mt-1" id="tsSlotCount"></p>
+        </div>
+    </section>
+
+    <!-- Ad: in-content -->
+    <div class="ts-ad-slot ts-ad-incontent" role="complementary" aria-label="Advertisement">Advertisement space</div>
+
+    <!-- WINNER MODAL -->
+    <div class="modal-overlay" id="tsWinnerModal">
+        <div class="modal-card glass text-center">
+            <h2 data-i18n="congrats">🎉 TIME SELECTED! 🎉</h2>
+            <div class="winner-name-display" id="tsModalTime">08:00 AM</div>
+            <p data-i18n="was_selected">has been randomly selected!</p>
+            <div class="flex-center gap-1 mt-2">
+                <button class="btn btn-secondary" id="tsModalSpinAgain" data-i18n="spin_again">Spin Again</button>
+                <button class="btn btn-primary" id="tsModalClose" data-i18n="close">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SEO CONTENT -->
+    <article class="ts-content-section">
+        <h2 data-i18n="what_is_title">What is a Time Spinner?</h2>
+        <p data-i18n="what_is_body">A Time Spinner is a random time generator that turns a range of clock times into a spinning wheel. Instead of manually picking a slot, you set a start time, an end time, and an interval — the tool builds every time in between and randomly lands on one, the same way a name wheel picks a random winner from a list.</p>
+
+        <h2 data-i18n="how_to_title">How to use the Time Spinner</h2>
+        <ol data-i18n-list="how_to_steps">
+            <li>Select a start time.</li>
+            <li>Select an end time.</li>
+            <li>Choose an interval (5, 10, 15, 30 minutes, or 1 hour).</li>
+            <li>Click "Generate time slots".</li>
+            <li>Press "Spin" and watch the wheel.</li>
+            <li>Get your random time — copy or share it instantly.</li>
+        </ol>
+
+        <h2 data-i18n="uses_title">Common uses</h2>
+        <div class="ts-use-grid" data-i18n-list="uses_list">
+            <div class="ts-use-chip">🎤 Student presentations</div>
+            <div class="ts-use-chip">🏫 Classroom activities</div>
+            <div class="ts-use-chip">🗓️ Meeting scheduling</div>
+            <div class="ts-use-chip">📚 Study sessions</div>
+            <div class="ts-use-chip">☕ Break times</div>
+            <div class="ts-use-chip">🎮 Games</div>
+            <div class="ts-use-chip">🎉 Events</div>
+        </div>
+
+        <h2 data-i18n="faq_title">Frequently asked questions</h2>
+        <div id="tsFaq">
+            <div class="ts-faq-item open">
+                <div class="ts-faq-q">What does the Time Spinner do?</div>
+                <div class="ts-faq-a">It builds a list of evenly spaced time slots between a start and end time you choose, then spins a wheel to land on one at random.</div>
+            </div>
+            <div class="ts-faq-item">
+                <div class="ts-faq-q">Can I choose the interval between times?</div>
+                <div class="ts-faq-a">Yes. Pick 5, 10, 15, or 30 minute steps, or a full 1 hour step, and the tool generates every slot in that range.</div>
+            </div>
+            <div class="ts-faq-item">
+                <div class="ts-faq-q">What happens if the range doesn't divide evenly?</div>
+                <div class="ts-faq-a">The tool stops at the last slot that fits inside your end time, so you never get a time past the range you set.</div>
+            </div>
+            <div class="ts-faq-item">
+                <div class="ts-faq-q">Is the result actually random?</div>
+                <div class="ts-faq-a">Yes. The winning slot is chosen using the browser's cryptographic random number generator before the wheel animation starts.</div>
+            </div>
+            <div class="ts-faq-item">
+                <div class="ts-faq-q">Does it save my results?</div>
+                <div class="ts-faq-a">Your most recent results are saved in your browser's local storage so you can glance back at them, and nothing is sent to a server.</div>
+            </div>
+            <div class="ts-faq-item">
+                <div class="ts-faq-q">Can I use this for classroom or meeting scheduling?</div>
+                <div class="ts-faq-a">Yes, it's commonly used to pick presentation slots, break times, or meeting start times fairly and quickly.</div>
+            </div>
+            <div class="ts-faq-item">
+                <div class="ts-faq-q">Does it work on mobile?</div>
+                <div class="ts-faq-a">Yes, the wheel and controls are fully responsive and touch-friendly on phones, tablets, and desktops.</div>
+            </div>
+            <div class="ts-faq-item">
+                <div class="ts-faq-q">Is the Time Spinner free to use?</div>
+                <div class="ts-faq-a">Yes, it's completely free with no sign-up required.</div>
+            </div>
+        </div>
+    </article>
+
+    <!-- Ad: rectangle -->
+    <div class="ts-ad-slot ts-ad-rectangle" role="complementary" aria-label="Advertisement" style="margin-inline:auto;">Advertisement space</div>
+
+    <section class="ts-content-section" aria-label="Related tools">
+        <h2 data-i18n="related_title">Related tools</h2>
+        <div class="feature-grid">
+            <a class="feature-card" href="/#tab-spinner"><span class="feature-icon">◉</span><strong>Random Name Wheel</strong><small>Spin for a fair pick from any list.</small></a>
+            <a class="feature-card" href="/#tab-teams"><span class="feature-icon">♙</span><strong>Team Generator</strong><small>Split a list into balanced teams.</small></a>
+            <a class="feature-card" href="/#tab-tools"><span class="feature-icon">✣</span><strong>Coin, Dice & More</strong><small>Quick random pickers for any decision.</small></a>
+        </div>
+    </section>
+
+</main>
+
+<div class="ts-ad-slot ts-ad-footer" role="complementary" aria-label="Advertisement">Advertisement space</div>
+
+<footer class="glass ts-simple-footer">
+    <p>© 2026 TIME SPIN — High Quality Smart Time & Team Tool.</p>
+    <p><a href="/">Home</a> · <a href="/#tab-tools">Random Tools</a></p>
+</footer>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<script src="time-spinner.js"></script>
+</body>
+</html>
